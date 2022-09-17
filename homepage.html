@@ -1,0 +1,1579 @@
+<!doctype html>
+<html lang="en">
+<head>
+<title>Markets - TradeOgre Digital Currency Exchange</title>
+<meta name="referrer" content="origin-when-cross-origin">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="msapplication-config" content="/img/favicon/browserconfig.xml">
+<meta name="theme-color" content="#ffffff">
+<meta name="language" content="English">
+<meta http-equiv="content-language" content="en">
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-113894488-1"></script>
+<script>window.dataLayer = window.dataLayer || []; function gtag(){dataLayer.push(arguments);} gtag('js', new Date()); gtag('config', 'UA-113894488-1');</script>
+<script src="/js/moment.min.js" type="text/javascript"></script>
+<script src="/js/jquery.min.js" type="text/javascript"></script>
+<script src="/js/jquery-ui.min.js" type="text/javascript"></script>
+<script src="/js/velocity.min.js" type="text/javascript"></script>
+<script src="/js/popper.min.js" type="text/javascript"></script>
+<script src="/js/bootstrap.min.js" type="text/javascript"></script>
+<link href="/css/bootstrap.min.css" rel="stylesheet" />
+<script src="/js/perfect-scrollbar.min.js" type="text/javascript"></script>
+<link href="/css/perfect-scrollbar.css" rel="stylesheet" />
+<script src="/js/js.cookie.min.js"></script>
+<link href="/css/font-awesome.min.css" rel="stylesheet" />
+<link href="/css/datatables.min.css" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css?family=Noto+Sans" rel="stylesheet">
+<link href="/css/style.css" rel="stylesheet" />
+<script src="/js/datatables.min.js"></script>
+<script src="/js/dataTables.responsive.min.js"></script>
+<script src="/js/datetime.js" type="text/javascript"></script>
+<script src="/js/big.js" type="text/javascript"></script>
+<link id="pagestyle" href="/css/dark.css" rel="stylesheet" />
+<script src="/js/style.js" type="text/javascript"></script>
+<link rel="apple-touch-icon" sizes="180x180" href="/img/favicon/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/img/favicon/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/img/favicon/favicon-16x16.png">
+<link rel="manifest" href="/img/favicon/manifest.json">
+<link rel="mask-icon" href="/img/favicon/safari-pinned-tab.svg" color="#5bbad5">
+<link rel="shortcut icon" href="/img/favicon/favicon.ico">
+<script src="/js/bootstrap-hover-dropdown.min.js" type="text/javascript"></script>
+<script src="/js/websocket.js" type="text/javascript"></script>
+<script>
+	function ShowAlert(text){
+		if(ShowAlert.i == undefined) ShowAlert.i = 0;
+		$('#alerts').show();
+		$('#alerts').append('<div id="alert_' + ShowAlert.i + '" class="alert alert-success" style="margin:0; margin-top:5px; display:none">' + text + '</div>');
+		$('#alert_' + ShowAlert.i).fadeIn();
+		setTimeout(function(i){$('#alert_' + i).fadeOut(1000, function(){$(this).remove();});}, 5000, ShowAlert.i);
+		ShowAlert.i++;
+	}
+	$(document).ready(function(){
+		var img = new Image();
+		img.src = '/img/offline.png';
+		wsconn.funcs_onopen.unshift(function(conn, e){
+			conn.send(JSON.stringify({'a': 'auth', 'cookie': document.cookie}));
+			$("#statusws").attr('src', '/img/online.png');
+		});
+		wsconn.funcs_onclose.unshift(function(conn, e){
+			$("#statusws").attr('src', '/img/offline.png');
+		});
+		wsconn.funcs_onmessage.unshift(function(conn, e){
+			var obj = JSON.parse(e.data);
+			switch(obj.a){
+				case 'info':
+					$("#online").html(obj.online);
+					jQuery.each(obj.bp, function(i, val){
+						var bp = parseFloat(val.p);
+						bp = bp.toFixed(2);
+						bp = bp.replace(/(\d)(?=(\d{3})+\.)/g, "$1,");
+						if(val.s == 'BTC'){
+							$("#bpbtc").html(bp);
+						}else
+						if(val.s == 'LTC'){
+							$("#bpltc").html(bp);
+						}
+					});
+				break;
+				case 'filled':
+					var spl = obj.market.split("-");
+					var base = spl[0];
+					var pair = spl[1];
+					ShowAlert((obj.d.t == 'sell' ? '<strong><span style="color: red">Sold</span></strong>' : '<strong><span style="color: green">Bought</span></strong>') + ' ' + obj.d.quantity + ' <img src="/img/coins/' + pair + '.png" width="16" height="16"> <strong>' + pair + '</strong> at ' + obj.d.price + ' <img src="/img/coins/' + base + '.png" width="16" height="16"> <strong>' + base + '</strong>');
+				break;
+			}
+		});
+		wsconn.start('wss://tradeogre.com:8443');
+	});
+	</script>
+</head>
+<body>
+<div id="main">
+<div id="navbar">
+<img src="/img/logo.svg" height="20" style="margin: 0 10px">
+<ul id="lnav">
+<li><a href="/markets">Markets</a></li>
+<li>
+<div class="dropdown show">
+<a href="#" role="button" id="dropdownMenuHelp" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Help</a>
+<div id="dropdownAccount" class="dropdown-menu" aria-labelledby="dropdownMenuHelp" style="margin: 0">
+<a class="dropdown-item" href="/help/api">API</a>
+<a class="dropdown-item" href="/help/fees">Fees</a>
+<div class="dropdown-divider"></div>
+<a class="dropdown-item" href="https://twitter.com/messages/compose?recipient_id=947645010903678976" target="_blank">Support</a>
+</div>
+</div>
+</li>
+</ul>
+<div style="position: absolute; right: 0; top: 0; margin: 0 10px">
+<ul>
+<li>
+<div class="dropdown show">
+<a href="#" role="button" id="dropdownMenuAccount" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-lg fa-user-circle" aria-hidden="true"></i></a>
+<div id="dropdownAccount" class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownMenuAccount" style="margin: 0">
+<a class="dropdown-item" href="/account/signin">Sign In</a>
+</div>
+</div>
+</li>
+</ul>
+</div>
+</div>
+<div id="main2">
+<script>
+$(document).ready(function() {
+	jQuery.fn.dataTableExt.oSort["change-desc"] = function (x, y){
+		x = $(x).data('numeric');
+		y = $(y).data('numeric');
+		return ((x < y) ? -1 : ((x > y) ?  1 : 0));
+	};
+
+	jQuery.fn.dataTableExt.oSort["change-asc"] = function (x, y){
+		x = $(x).data('numeric');
+		y = $(y).data('numeric');
+		return ((x < y) ?  1 : ((x > y) ? -1 : 0));
+	}
+    $('#btcmarkets').DataTable({
+	"lengthChange": false,
+	"responsive": true,
+	"pageLength": 15,
+	"order": [[ 4, "desc" ]],
+	"aoColumns": [
+            null,
+            null,
+            {"sType": "change"},
+            null,
+            null,
+            null,
+			null
+        ]
+	});
+	$('#usdtmarkets').DataTable({
+	"lengthChange": false,
+	"responsive": true,
+	"pageLength": 5,
+	"order": [[ 4, "desc" ]],
+	"aoColumns": [
+            null,
+            null,
+            {"sType": "change"},
+            null,
+            null,
+            null,
+			null
+        ]
+	});
+	$('#ltcmarkets').DataTable({
+	"lengthChange": false,
+	"responsive": true,
+	"pageLength": 5,
+	"order": [[ 4, "desc" ]],
+	"aoColumns": [
+            null,
+            null,
+            {"sType": "change"},
+            null,
+            null,
+            null,
+			null
+        ]
+	});
+} );
+</script>
+<div style="font-size: 12px" class="input-group-sm">
+<div class="marketname" style="margin-left: 10px; margin-top: 5px"><img src="/img/coins/BTC.png" width="16" height="16" style="margin-right: 5px; ">BTC Markets</div>
+<div style="margin-bottom: 5px">
+<table id="btcmarkets" class="table table-sm responsive table-striped" cellspacing="0" width="100%">
+<thead>
+<tr>
+<th>Currency</th>
+<th>Market</th>
+<th>Change</th>
+<th>Price</th>
+<th class="min-tablet">Volume</th>
+<th class="min-desktop">High</th>
+<th class="min-desktop">Low</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><span><img src="/img/coins/ACM.png" width="16" height="16" style="margin: 5px" />Actinium</span></td>
+<td><a href="/exchange/BTC-ACM">BTC-ACM</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="0">&#9650; 0.00%</span></td>
+<td>0.00000025</td>
+<td>0.00384626</td>
+<td>0.00000025</td>
+<td>0.00000023</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/ADA.png" width="16" height="16" style="margin: 5px" />Cardano</span></td>
+<td><a href="/exchange/BTC-ADA">BTC-ADA</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="2.4327784891165">&#9650; 2.43%</span></td>
+<td>0.00002400</td>
+<td>0.05049851</td>
+<td>0.00002411</td>
+<td>0.00002330</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/AEON.png" width="16" height="16" style="margin: 5px" />Aeon</span></td>
+<td><a href="/exchange/BTC-AEON">BTC-AEON</a></td>
+<td><span class="negcolor" style="font-weight: bold" data-numeric="-1.7366136034732">&#9660; 1.74%</span></td>
+<td>0.00000679</td>
+<td>0.01807338</td>
+<td>0.00000722</td>
+<td>0.00000679</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/ARQ.png" width="16" height="16" style="margin: 5px" />ArQmA</span></td>
+<td><a href="/exchange/BTC-ARQ">BTC-ARQ</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="6.4516129032258">&#9650; 6.45%</span></td>
+<td>0.00000033</td>
+<td>0.38887442</td>
+<td>0.00000042</td>
+<td>0.00000031</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/ARRR.png" width="16" height="16" style="margin: 5px" />Pirate</span></td>
+<td><a href="/exchange/BTC-ARRR">BTC-ARRR</a></td>
+<td><span class="negcolor" style="font-weight: bold" data-numeric="-0.88743577767398">&#9660; 0.89%</span></td>
+<td>0.00002122</td>
+<td>1.23026434</td>
+<td>0.00002158</td>
+<td>0.00002093</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/AVN.png" width="16" height="16" style="margin: 5px" />Avian</span></td>
+<td><a href="/exchange/BTC-AVN">BTC-AVN</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="0">&#9650; 0.00%</span></td>
+<td>0.00000001</td>
+<td>0.00000000</td>
+<td>0.00000001</td>
+<td>0.00000001</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/BBS.png" width="16" height="16" style="margin: 5px" />BBSCoin</span></td>
+<td><a href="/exchange/BTC-BBS">BTC-BBS</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="0">&#9650; 0.00%</span></td>
+<td>0.00000001</td>
+<td>0.00000000</td>
+<td>0.00000001</td>
+<td>0.00000001</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/BCN.png" width="16" height="16" style="margin: 5px" />Bytecoin</span></td>
+<td><a href="/exchange/BTC-BCN">BTC-BCN</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="0">&#9650; 0.00%</span></td>
+<td>0.00000001</td>
+<td>0.00698600</td>
+<td>0.00000001</td>
+<td>0.00000001</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/BEAM.png" width="16" height="16" style="margin: 5px" />Beam</span></td>
+<td><a href="/exchange/BTC-BEAM">BTC-BEAM</a></td>
+<td><span class="negcolor" style="font-weight: bold" data-numeric="-4.0268456375839">&#9660; 4.03%</span></td>
+<td>0.00001001</td>
+<td>0.01746698</td>
+<td>0.00001135</td>
+<td>0.00001000</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/BITC.png" width="16" height="16" style="margin: 5px" />BitCash</span></td>
+<td><a href="/exchange/BTC-BITC">BTC-BITC</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="0">&#9650; 0.00%</span></td>
+<td>0.00000005</td>
+<td>0.00014103</td>
+<td>0.00000005</td>
+<td>0.00000005</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/BKC.png" width="16" height="16" style="margin: 5px" />Balkancoin</span></td>
+<td><a href="/exchange/BTC-BKC">BTC-BKC</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="0">&#9650; 0.00%</span></td>
+<td>0.00000001</td>
+<td>0.00000000</td>
+<td>0.00000001</td>
+<td>0.00000001</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/BLKC.png" width="16" height="16" style="margin: 5px" />BlackHat Coin</span></td>
+<td><a href="/exchange/BTC-BLKC">BTC-BLKC</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="5.4237288135593">&#9650; 5.42%</span></td>
+<td>0.00000311</td>
+<td>0.01014142</td>
+<td>0.00000322</td>
+<td>0.00000295</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/BLOC.png" width="16" height="16" style="margin: 5px" />BLOC.money</span></td>
+<td><a href="/exchange/BTC-BLOC">BTC-BLOC</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="0">&#9650; 0.00%</span></td>
+<td>0.00000006</td>
+<td>0.00147178</td>
+<td>0.00000006</td>
+<td>0.00000006</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/BMB.png" width="16" height="16" style="margin: 5px" />Bamboo</span></td>
+<td><a href="/exchange/BTC-BMB">BTC-BMB</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="1.0416666666667">&#9650; 1.04%</span></td>
+<td>0.00000097</td>
+<td>0.01006352</td>
+<td>0.00000119</td>
+<td>0.00000093</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/BTCP.png" width="16" height="16" style="margin: 5px" />Bitcoin Private</span></td>
+<td><a href="/exchange/BTC-BTCP">BTC-BTCP</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="0">&#9650; 0.00%</span></td>
+<td>0.00002999</td>
+<td>0.00053315</td>
+<td>0.00002999</td>
+<td>0.00002999</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/CASH.png" width="16" height="16" style="margin: 5px" />Litecash</span></td>
+<td><a href="/exchange/BTC-CASH">BTC-CASH</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="50">&#9650; 50.00%</span></td>
+<td>0.00000003</td>
+<td>0.00680317</td>
+<td>0.00000003</td>
+<td>0.00000002</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/CCX.png" width="16" height="16" style="margin: 5px" />Conceal</span></td>
+<td><a href="/exchange/BTC-CCX">BTC-CCX</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="8.4905660377358">&#9650; 8.49%</span></td>
+<td>0.00000460</td>
+<td>0.39269202</td>
+<td>0.00000460</td>
+<td>0.00000417</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/CIV.png" width="16" height="16" style="margin: 5px" />Civitas</span></td>
+<td><a href="/exchange/BTC-CIV">BTC-CIV</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="0">&#9650; 0.00%</span></td>
+<td>0.00000006</td>
+<td>0.00000000</td>
+<td>0.00000006</td>
+<td>0.00000006</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/CLOAK.png" width="16" height="16" style="margin: 5px" />CloakCoin</span></td>
+<td><a href="/exchange/BTC-CLOAK">BTC-CLOAK</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="8.7354409317804">&#9650; 8.74%</span></td>
+<td>0.00001307</td>
+<td>0.01246740</td>
+<td>0.00001345</td>
+<td>0.00001053</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/COAL.png" width="16" height="16" style="margin: 5px" />BitCoal</span></td>
+<td><a href="/exchange/BTC-COAL">BTC-COAL</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="0">&#9650; 0.00%</span></td>
+<td>0.00000005</td>
+<td>0.00000000</td>
+<td>0.00000005</td>
+<td>0.00000005</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/CUT.png" width="16" height="16" style="margin: 5px" />CUTcoin</span></td>
+<td><a href="/exchange/BTC-CUT">BTC-CUT</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="0">&#9650; 0.00%</span></td>
+<td>0.00000017</td>
+<td>0.00000000</td>
+<td>0.00000017</td>
+<td>0.00000017</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/D.png" width="16" height="16" style="margin: 5px" />Denarius</span></td>
+<td><a href="/exchange/BTC-D">BTC-D</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="0">&#9650; 0.00%</span></td>
+<td>0.00000348</td>
+<td>0.00000000</td>
+<td>0.00000348</td>
+<td>0.00000348</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/DASH.png" width="16" height="16" style="margin: 5px" />Dash</span></td>
+<td><a href="/exchange/BTC-DASH">BTC-DASH</a></td>
+<td><span class="negcolor" style="font-weight: bold" data-numeric="-2.7404807393255">&#9660; 2.74%</span></td>
+<td>0.00218902</td>
+<td>0.00496227</td>
+<td>0.00225070</td>
+<td>0.00218902</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/DERO.png" width="16" height="16" style="margin: 5px" />Dero</span></td>
+<td><a href="/exchange/BTC-DERO">BTC-DERO</a></td>
+<td><span class="negcolor" style="font-weight: bold" data-numeric="-1.9855504471278">&#9660; 1.99%</span></td>
+<td>0.00019400</td>
+<td>1.58179465</td>
+<td>0.00019965</td>
+<td>0.00019393</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/DOGE.png" width="16" height="16" style="margin: 5px" />Dogecoin</span></td>
+<td><a href="/exchange/BTC-DOGE">BTC-DOGE</a></td>
+<td><span class="negcolor" style="font-weight: bold" data-numeric="-0.66006600660065">&#9660; 0.66%</span></td>
+<td>0.00000301</td>
+<td>0.03315640</td>
+<td>0.00000305</td>
+<td>0.00000288</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/ERG.png" width="16" height="16" style="margin: 5px" />Ergo</span></td>
+<td><a href="/exchange/BTC-ERG">BTC-ERG</a></td>
+<td><span class="negcolor" style="font-weight: bold" data-numeric="-4.2700648334451">&#9660; 4.27%</span></td>
+<td>0.00021410</td>
+<td>0.51787441</td>
+<td>0.00023578</td>
+<td>0.00021040</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/ETH.png" width="16" height="16" style="margin: 5px" />Ethereum</span></td>
+<td><a href="/exchange/BTC-ETH">BTC-ETH</a></td>
+<td><span class="negcolor" style="font-weight: bold" data-numeric="-1.6858608893957">&#9660; 1.69%</span></td>
+<td>0.07242606</td>
+<td>0.95812156</td>
+<td>0.07464126</td>
+<td>0.07156001</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/ETN.png" width="16" height="16" style="margin: 5px" />Electroneum</span></td>
+<td><a href="/exchange/BTC-ETN">BTC-ETN</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="0">&#9650; 0.00%</span></td>
+<td>0.00000016</td>
+<td>0.00037409</td>
+<td>0.00000016</td>
+<td>0.00000016</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/ETNX.png" width="16" height="16" style="margin: 5px" />Electronero</span></td>
+<td><a href="/exchange/BTC-ETNX">BTC-ETNX</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="0">&#9650; 0.00%</span></td>
+<td>0.00000001</td>
+<td>0.00000000</td>
+<td>0.00000001</td>
+<td>0.00000001</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/ETNXP.png" width="16" height="16" style="margin: 5px" />ElectroneroPulse</span></td>
+<td><a href="/exchange/BTC-ETNXP">BTC-ETNXP</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="0">&#9650; 0.00%</span></td>
+<td>0.00000001</td>
+<td>0.00000000</td>
+<td>0.00000001</td>
+<td>0.00000001</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/FBF.png" width="16" height="16" style="margin: 5px" />FreelaBit</span></td>
+<td><a href="/exchange/BTC-FBF">BTC-FBF</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="0">&#9650; 0.00%</span></td>
+<td>0.00000001</td>
+<td>0.00000000</td>
+<td>0.00000001</td>
+<td>0.00000001</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/FIRO.png" width="16" height="16" style="margin: 5px" />Firo</span></td>
+<td><a href="/exchange/BTC-FIRO">BTC-FIRO</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="0.035087719298246">&#9650; 0.04%</span></td>
+<td>0.00014255</td>
+<td>0.03521799</td>
+<td>0.00016858</td>
+<td>0.00014247</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/FLUX.png" width="16" height="16" style="margin: 5px" />Flux</span></td>
+<td><a href="/exchange/BTC-FLUX">BTC-FLUX</a></td>
+<td><span class="negcolor" style="font-weight: bold" data-numeric="-0.11049723756905">&#9660; 0.11%</span></td>
+<td>0.00005424</td>
+<td>0.51176738</td>
+<td>0.00005766</td>
+<td>0.00005177</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/GHOST.png" width="16" height="16" style="margin: 5px" />Ghost</span></td>
+<td><a href="/exchange/BTC-GHOST">BTC-GHOST</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="2.2988505747126">&#9650; 2.30%</span></td>
+<td>0.00000623</td>
+<td>0.04736559</td>
+<td>0.00000627</td>
+<td>0.00000596</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/GPKR.png" width="16" height="16" style="margin: 5px" />Gold Poker</span></td>
+<td><a href="/exchange/BTC-GPKR">BTC-GPKR</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="0">&#9650; 0.00%</span></td>
+<td>0.00000005</td>
+<td>0.00000000</td>
+<td>0.00000005</td>
+<td>0.00000005</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/GRFT.png" width="16" height="16" style="margin: 5px" />Graft</span></td>
+<td><a href="/exchange/BTC-GRFT">BTC-GRFT</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="0">&#9650; 0.00%</span></td>
+<td>0.00000001</td>
+<td>0.00000000</td>
+<td>0.00000001</td>
+<td>0.00000001</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/GRIMM.png" width="16" height="16" style="margin: 5px" />Grimm</span></td>
+<td><a href="/exchange/BTC-GRIMM">BTC-GRIMM</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="0">&#9650; 0.00%</span></td>
+<td>0.00000001</td>
+<td>0.00000000</td>
+<td>0.00000001</td>
+<td>0.00000001</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/GRIN.png" width="16" height="16" style="margin: 5px" />Grin</span></td>
+<td><a href="/exchange/BTC-GRIN">BTC-GRIN</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="0.62111801242235">&#9650; 0.62%</span></td>
+<td>0.00000324</td>
+<td>0.33786941</td>
+<td>0.00000350</td>
+<td>0.00000321</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/GRLC.png" width="16" height="16" style="margin: 5px" />Garlicoin</span></td>
+<td><a href="/exchange/BTC-GRLC">BTC-GRLC</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="7.6923076923077">&#9650; 7.69%</span></td>
+<td>0.00000070</td>
+<td>0.00466096</td>
+<td>0.00000075</td>
+<td>0.00000065</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/HNS.png" width="16" height="16" style="margin: 5px" />Handshake</span></td>
+<td><a href="/exchange/BTC-HNS">BTC-HNS</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="0">&#9650; 0.00%</span></td>
+<td>0.00000235</td>
+<td>0.00000000</td>
+<td>0.00000235</td>
+<td>0.00000235</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/HUSH.png" width="16" height="16" style="margin: 5px" />Hush</span></td>
+<td><a href="/exchange/BTC-HUSH">BTC-HUSH</a></td>
+<td><span class="negcolor" style="font-weight: bold" data-numeric="-9.6551724137931">&#9660; 9.66%</span></td>
+<td>0.00000262</td>
+<td>0.00020350</td>
+<td>0.00000290</td>
+<td>0.00000262</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/INC.png" width="16" height="16" style="margin: 5px" />Incognito</span></td>
+<td><a href="/exchange/BTC-INC">BTC-INC</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="0">&#9650; 0.00%</span></td>
+<td>0.00000001</td>
+<td>0.00000000</td>
+<td>0.00000001</td>
+<td>0.00000001</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/INTU.png" width="16" height="16" style="margin: 5px" />INTUcoin</span></td>
+<td><a href="/exchange/BTC-INTU">BTC-INTU</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="0">&#9650; 0.00%</span></td>
+<td>0.00000001</td>
+<td>0.00000000</td>
+<td>0.00000001</td>
+<td>0.00000001</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/IRD.png" width="16" height="16" style="margin: 5px" />Iridium</span></td>
+<td><a href="/exchange/BTC-IRD">BTC-IRD</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="6.1538461538461">&#9650; 6.15%</span></td>
+<td>0.00000069</td>
+<td>0.03587354</td>
+<td>0.00000080</td>
+<td>0.00000065</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/KDA.png" width="16" height="16" style="margin: 5px" />Kadena</span></td>
+<td><a href="/exchange/BTC-KDA">BTC-KDA</a></td>
+<td><span class="negcolor" style="font-weight: bold" data-numeric="-2.332285115304">&#9660; 2.33%</span></td>
+<td>0.00007454</td>
+<td>0.00707212</td>
+<td>0.00007999</td>
+<td>0.00007454</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/KRB.png" width="16" height="16" style="margin: 5px" />Karbo</span></td>
+<td><a href="/exchange/BTC-KRB">BTC-KRB</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="0">&#9650; 0.00%</span></td>
+<td>0.00000200</td>
+<td>0.00000000</td>
+<td>0.00000200</td>
+<td>0.00000200</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/LNS.png" width="16" height="16" style="margin: 5px" />Lines</span></td>
+<td><a href="/exchange/BTC-LNS">BTC-LNS</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="0">&#9650; 0.00%</span></td>
+<td>0.00000001</td>
+<td>0.00000000</td>
+<td>0.00000001</td>
+<td>0.00000001</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/LTC.png" width="16" height="16" style="margin: 5px" />Litecoin</span></td>
+<td><a href="/exchange/BTC-LTC">BTC-LTC</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="1.0628623394339">&#9650; 1.06%</span></td>
+<td>0.00284496</td>
+<td>2.15867807</td>
+<td>0.00290999</td>
+<td>0.00280937</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/LTHN.png" width="16" height="16" style="margin: 5px" />Lethean</span></td>
+<td><a href="/exchange/BTC-LTHN">BTC-LTHN</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="0">&#9650; 0.00%</span></td>
+<td>0.00000001</td>
+<td>0.00000000</td>
+<td>0.00000001</td>
+<td>0.00000001</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/LUX.png" width="16" height="16" style="margin: 5px" />LUXCoin</span></td>
+<td><a href="/exchange/BTC-LUX">BTC-LUX</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="0">&#9650; 0.00%</span></td>
+<td>0.00000037</td>
+<td>0.00037000</td>
+<td>0.00000037</td>
+<td>0.00000037</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/MAT.png" width="16" height="16" style="margin: 5px" />Matka</span></td>
+<td><a href="/exchange/BTC-MAT">BTC-MAT</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="0">&#9650; 0.00%</span></td>
+<td>0.00000001</td>
+<td>0.00000000</td>
+<td>0.00000001</td>
+<td>0.00000001</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/MSR.png" width="16" height="16" style="margin: 5px" />Masari</span></td>
+<td><a href="/exchange/BTC-MSR">BTC-MSR</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="30">&#9650; 30.00%</span></td>
+<td>0.00000039</td>
+<td>0.08143999</td>
+<td>0.00000053</td>
+<td>0.00000030</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/MWC.png" width="16" height="16" style="margin: 5px" />MWC</span></td>
+<td><a href="/exchange/BTC-MWC">BTC-MWC</a></td>
+<td><span class="negcolor" style="font-weight: bold" data-numeric="-1.3317352510321">&#9660; 1.33%</span></td>
+<td>0.00007409</td>
+<td>0.01245765</td>
+<td>0.00007509</td>
+<td>0.00007409</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/NAH.png" width="16" height="16" style="margin: 5px" />Strayacoin</span></td>
+<td><a href="/exchange/BTC-NAH">BTC-NAH</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="0">&#9650; 0.00%</span></td>
+<td>0.00000006</td>
+<td>0.00016609</td>
+<td>0.00000006</td>
+<td>0.00000006</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/NBR.png" width="16" height="16" style="margin: 5px" />Niobio</span></td>
+<td><a href="/exchange/BTC-NBR">BTC-NBR</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="0">&#9650; 0.00%</span></td>
+<td>0.00000045</td>
+<td>0.00000000</td>
+<td>0.00000045</td>
+<td>0.00000045</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/OBTC.png" width="16" height="16" style="margin: 5px" />Optical Bitcoin</span></td>
+<td><a href="/exchange/BTC-OBTC">BTC-OBTC</a></td>
+<td><span class="negcolor" style="font-weight: bold" data-numeric="-3.2173913043478">&#9660; 3.22%</span></td>
+<td>0.00001113</td>
+<td>0.06348219</td>
+<td>0.00001564</td>
+<td>0.00001011</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/OMB.png" width="16" height="16" style="margin: 5px" />Ombre</span></td>
+<td><a href="/exchange/BTC-OMB">BTC-OMB</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="0">&#9650; 0.00%</span></td>
+<td>0.00000001</td>
+<td>0.00000000</td>
+<td>0.00000001</td>
+<td>0.00000001</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/ONION.png" width="16" height="16" style="margin: 5px" />DeepOnion</span></td>
+<td><a href="/exchange/BTC-ONION">BTC-ONION</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="4.2253521126761">&#9650; 4.23%</span></td>
+<td>0.00000370</td>
+<td>0.02736204</td>
+<td>0.00000429</td>
+<td>0.00000348</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/OXEN.png" width="16" height="16" style="margin: 5px" />Oxen</span></td>
+<td><a href="/exchange/BTC-OXEN">BTC-OXEN</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="0">&#9650; 0.00%</span></td>
+<td>0.00001036</td>
+<td>0.00313251</td>
+<td>0.00001036</td>
+<td>0.00001036</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/PCN.png" width="16" height="16" style="margin: 5px" />PeepCoin</span></td>
+<td><a href="/exchange/BTC-PCN">BTC-PCN</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="0">&#9650; 0.00%</span></td>
+<td>0.00000001</td>
+<td>0.00000000</td>
+<td>0.00000001</td>
+<td>0.00000001</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/PIVX.png" width="16" height="16" style="margin: 5px" />PIVX</span></td>
+<td><a href="/exchange/BTC-PIVX">BTC-PIVX</a></td>
+<td><span class="negcolor" style="font-weight: bold" data-numeric="-2.0568070519099">&#9660; 2.06%</span></td>
+<td>0.00002000</td>
+<td>0.59356718</td>
+<td>0.00002556</td>
+<td>0.00001779</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/PLURA.png" width="16" height="16" style="margin: 5px" />PluraCoin</span></td>
+<td><a href="/exchange/BTC-PLURA">BTC-PLURA</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="0">&#9650; 0.00%</span></td>
+<td>0.00000001</td>
+<td>0.00000000</td>
+<td>0.00000001</td>
+<td>0.00000001</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/POT.png" width="16" height="16" style="margin: 5px" />Potcoin</span></td>
+<td><a href="/exchange/BTC-POT">BTC-POT</a></td>
+<td><span class="negcolor" style="font-weight: bold" data-numeric="-5.8823529411765">&#9660; 5.88%</span></td>
+<td>0.00000016</td>
+<td>0.00000000</td>
+<td>0.00000017</td>
+<td>0.00000016</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/PRCY.png" width="16" height="16" style="margin: 5px" />PRivaCY Coin</span></td>
+<td><a href="/exchange/BTC-PRCY">BTC-PRCY</a></td>
+<td><span class="negcolor" style="font-weight: bold" data-numeric="-0.69444444444444">&#9660; 0.69%</span></td>
+<td>0.00000143</td>
+<td>1.11697873</td>
+<td>0.00000150</td>
+<td>0.00000137</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/PURK.png" width="16" height="16" style="margin: 5px" />Purk</span></td>
+<td><a href="/exchange/BTC-PURK">BTC-PURK</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="0">&#9650; 0.00%</span></td>
+<td>0.00000050</td>
+<td>0.00000000</td>
+<td>0.00000050</td>
+<td>0.00000050</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/QTUM.png" width="16" height="16" style="margin: 5px" />Qtum</span></td>
+<td><a href="/exchange/BTC-QTUM">BTC-QTUM</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="0">&#9650; 0.00%</span></td>
+<td>0.00015145</td>
+<td>0.00000000</td>
+<td>0.00015145</td>
+<td>0.00015145</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/QUAN.png" width="16" height="16" style="margin: 5px" />Quantis</span></td>
+<td><a href="/exchange/BTC-QUAN">BTC-QUAN</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="0">&#9650; 0.00%</span></td>
+<td>0.00000001</td>
+<td>0.00000000</td>
+<td>0.00000001</td>
+<td>0.00000001</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/RTM.png" width="16" height="16" style="margin: 5px" />Raptoreum</span></td>
+<td><a href="/exchange/BTC-RTM">BTC-RTM</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="7.1428571428571">&#9650; 7.14%</span></td>
+<td>0.00000015</td>
+<td>0.72926433</td>
+<td>0.00000016</td>
+<td>0.00000013</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/RTO.png" width="16" height="16" style="margin: 5px" />Arto</span></td>
+<td><a href="/exchange/BTC-RTO">BTC-RTO</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="0">&#9650; 0.00%</span></td>
+<td>0.00000002</td>
+<td>0.00000000</td>
+<td>0.00000002</td>
+<td>0.00000002</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/RVN.png" width="16" height="16" style="margin: 5px" />Ravencoin</span></td>
+<td><a href="/exchange/BTC-RVN">BTC-RVN</a></td>
+<td><span class="negcolor" style="font-weight: bold" data-numeric="-8.8122605363985">&#9660; 8.81%</span></td>
+<td>0.00000238</td>
+<td>0.48636429</td>
+<td>0.00000266</td>
+<td>0.00000235</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/RYO.png" width="16" height="16" style="margin: 5px" />Ryo</span></td>
+<td><a href="/exchange/BTC-RYO">BTC-RYO</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="2.1505376344086">&#9650; 2.15%</span></td>
+<td>0.00000095</td>
+<td>0.14536214</td>
+<td>0.00000098</td>
+<td>0.00000092</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/SCP.png" width="16" height="16" style="margin: 5px" />ScPrime</span></td>
+<td><a href="/exchange/BTC-SCP">BTC-SCP</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="0">&#9650; 0.00%</span></td>
+<td>0.00001112</td>
+<td>0.00082737</td>
+<td>0.00001112</td>
+<td>0.00001112</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/SHB.png" width="16" height="16" style="margin: 5px" />SkyHub</span></td>
+<td><a href="/exchange/BTC-SHB">BTC-SHB</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="50">&#9650; 50.00%</span></td>
+<td>0.00000069</td>
+<td>0.00246607</td>
+<td>0.00000072</td>
+<td>0.00000046</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/SIN.png" width="16" height="16" style="margin: 5px" />SINOVATE</span></td>
+<td><a href="/exchange/BTC-SIN">BTC-SIN</a></td>
+<td><span class="negcolor" style="font-weight: bold" data-numeric="-33.333333333333">&#9660; 33.33%</span></td>
+<td>0.00000002</td>
+<td>0.00257477</td>
+<td>0.00000003</td>
+<td>0.00000002</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/SLD.png" width="16" height="16" style="margin: 5px" />Soldo</span></td>
+<td><a href="/exchange/BTC-SLD">BTC-SLD</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="0">&#9650; 0.00%</span></td>
+<td>0.00000081</td>
+<td>0.00000000</td>
+<td>0.00000081</td>
+<td>0.00000081</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/SOLACE.png" width="16" height="16" style="margin: 5px" />Solacecoin</span></td>
+<td><a href="/exchange/BTC-SOLACE">BTC-SOLACE</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="0">&#9650; 0.00%</span></td>
+<td>0.00000001</td>
+<td>0.00000000</td>
+<td>0.00000001</td>
+<td>0.00000001</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/SUMO.png" width="16" height="16" style="margin: 5px" />Sumokoin</span></td>
+<td><a href="/exchange/BTC-SUMO">BTC-SUMO</a></td>
+<td><span class="negcolor" style="font-weight: bold" data-numeric="-2.9411764705882">&#9660; 2.94%</span></td>
+<td>0.00000066</td>
+<td>0.04238998</td>
+<td>0.00000073</td>
+<td>0.00000055</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/SYFR.png" width="16" height="16" style="margin: 5px" />Syfer</span></td>
+<td><a href="/exchange/BTC-SYFR">BTC-SYFR</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="0">&#9650; 0.00%</span></td>
+<td>0.00000001</td>
+<td>0.00000000</td>
+<td>0.00000001</td>
+<td>0.00000001</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/TRTL.png" width="16" height="16" style="margin: 5px" />TurtleCoin</span></td>
+<td><a href="/exchange/BTC-TRTL">BTC-TRTL</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="0">&#9650; 0.00%</span></td>
+<td>0.00000001</td>
+<td>0.00055634</td>
+<td>0.00000001</td>
+<td>0.00000001</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/TUBE.png" width="16" height="16" style="margin: 5px" />BitTube</span></td>
+<td><a href="/exchange/BTC-TUBE">BTC-TUBE</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="0">&#9650; 0.00%</span></td>
+<td>0.00000003</td>
+<td>0.00275075</td>
+<td>0.00000003</td>
+<td>0.00000002</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/UFO.png" width="16" height="16" style="margin: 5px" />Uniform Fiscal Object</span></td>
+<td><a href="/exchange/BTC-UFO">BTC-UFO</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="0">&#9650; 0.00%</span></td>
+<td>0.00000002</td>
+<td>0.00000000</td>
+<td>0.00000002</td>
+<td>0.00000002</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/UNI.png" width="16" height="16" style="margin: 5px" />Uniswap</span></td>
+<td><a href="/exchange/BTC-UNI">BTC-UNI</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="0">&#9650; 0.00%</span></td>
+<td>0.00013251</td>
+<td>0.00000000</td>
+<td>0.00013251</td>
+<td>0.00013251</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/VEIL.png" width="16" height="16" style="margin: 5px" />Veil</span></td>
+<td><a href="/exchange/BTC-VEIL">BTC-VEIL</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="0">&#9650; 0.00%</span></td>
+<td>0.00000020</td>
+<td>0.00779893</td>
+<td>0.00000023</td>
+<td>0.00000017</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/WAE.png" width="16" height="16" style="margin: 5px" />WeyCoin</span></td>
+<td><a href="/exchange/BTC-WAE">BTC-WAE</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="0">&#9650; 0.00%</span></td>
+<td>0.00000001</td>
+<td>0.00000000</td>
+<td>0.00000001</td>
+<td>0.00000001</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/WOW.png" width="16" height="16" style="margin: 5px" />Wownero</span></td>
+<td><a href="/exchange/BTC-WOW">BTC-WOW</a></td>
+<td><span class="negcolor" style="font-weight: bold" data-numeric="-6.7484662576687">&#9660; 6.75%</span></td>
+<td>0.00000304</td>
+<td>0.35492142</td>
+<td>0.00000330</td>
+<td>0.00000301</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/WTIP.png" width="16" height="16" style="margin: 5px" />Worktips</span></td>
+<td><a href="/exchange/BTC-WTIP">BTC-WTIP</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="0">&#9650; 0.00%</span></td>
+<td>0.00000001</td>
+<td>0.00000000</td>
+<td>0.00000001</td>
+<td>0.00000001</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/XAO.png" width="16" height="16" style="margin: 5px" />Alloy</span></td>
+<td><a href="/exchange/BTC-XAO">BTC-XAO</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="0">&#9650; 0.00%</span></td>
+<td>0.00000002</td>
+<td>0.00000000</td>
+<td>0.00000002</td>
+<td>0.00000002</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/XEQ.png" width="16" height="16" style="margin: 5px" />Equilibria</span></td>
+<td><a href="/exchange/BTC-XEQ">BTC-XEQ</a></td>
+<td><span class="negcolor" style="font-weight: bold" data-numeric="-5.9880239520958">&#9660; 5.99%</span></td>
+<td>0.00000314</td>
+<td>0.44567235</td>
+<td>0.00000339</td>
+<td>0.00000310</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/XGM.png" width="16" height="16" style="margin: 5px" />Defis</span></td>
+<td><a href="/exchange/BTC-XGM">BTC-XGM</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="0">&#9650; 0.00%</span></td>
+<td>0.00000001</td>
+<td>0.00000000</td>
+<td>0.00000001</td>
+<td>0.00000001</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/XGS.png" width="16" height="16" style="margin: 5px" />GenesisX</span></td>
+<td><a href="/exchange/BTC-XGS">BTC-XGS</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="0">&#9650; 0.00%</span></td>
+<td>0.00000007</td>
+<td>0.00000000</td>
+<td>0.00000007</td>
+<td>0.00000007</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/XHV.png" width="16" height="16" style="margin: 5px" />Haven</span></td>
+<td><a href="/exchange/BTC-XHV">BTC-XHV</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="0.47923322683706">&#9650; 0.48%</span></td>
+<td>0.00002516</td>
+<td>0.25620883</td>
+<td>0.00002622</td>
+<td>0.00002486</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/XLA.png" width="16" height="16" style="margin: 5px" />Scala</span></td>
+<td><a href="/exchange/BTC-XLA">BTC-XLA</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="0">&#9650; 0.00%</span></td>
+<td>0.00000001</td>
+<td>0.00010000</td>
+<td>0.00000001</td>
+<td>0.00000001</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/XMC.png" width="16" height="16" style="margin: 5px" />Monero Classic</span></td>
+<td><a href="/exchange/BTC-XMC">BTC-XMC</a></td>
+<td><span class="negcolor" style="font-weight: bold" data-numeric="-1.5151515151515">&#9660; 1.52%</span></td>
+<td>0.00000065</td>
+<td>0.00269884</td>
+<td>0.00000066</td>
+<td>0.00000064</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/XMR.png" width="16" height="16" style="margin: 5px" />Monero</span></td>
+<td><a href="/exchange/BTC-XMR">BTC-XMR</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="3.0019376473967">&#9650; 3.00%</span></td>
+<td>0.00763884</td>
+<td>31.03660791</td>
+<td>0.00763884</td>
+<td>0.00741620</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/XMV.png" width="16" height="16" style="margin: 5px" />MoneroV</span></td>
+<td><a href="/exchange/BTC-XMV">BTC-XMV</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="25.925925925926">&#9650; 25.93%</span></td>
+<td>0.00000034</td>
+<td>0.00373024</td>
+<td>0.00000035</td>
+<td>0.00000027</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/NANO.png" width="16" height="16" style="margin: 5px" />Nano</span></td>
+<td><a href="/exchange/BTC-NANO">BTC-NANO</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="9.7342871742463">&#9650; 9.73%</span></td>
+<td>0.00004295</td>
+<td>0.04466304</td>
+<td>0.00004398</td>
+<td>0.00003914</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/XNV.png" width="16" height="16" style="margin: 5px" />Nerva</span></td>
+<td><a href="/exchange/BTC-XNV">BTC-XNV</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="41.379310344828">&#9650; 41.38%</span></td>
+<td>0.00000041</td>
+<td>0.01583869</td>
+<td>0.00000041</td>
+<td>0.00000029</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/XPP.png" width="16" height="16" style="margin: 5px" />PrivatePay</span></td>
+<td><a href="/exchange/BTC-XPP">BTC-XPP</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="0">&#9650; 0.00%</span></td>
+<td>0.00000002</td>
+<td>0.00000000</td>
+<td>0.00000002</td>
+<td>0.00000002</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/XRN.png" width="16" height="16" style="margin: 5px" />Saronite</span></td>
+<td><a href="/exchange/BTC-XRN">BTC-XRN</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="0">&#9650; 0.00%</span></td>
+<td>0.00000097</td>
+<td>0.00000000</td>
+<td>0.00000097</td>
+<td>0.00000097</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/XRP.png" width="16" height="16" style="margin: 5px" />Ripple</span></td>
+<td><a href="/exchange/BTC-XRP">BTC-XRP</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="7.7248038624019">&#9650; 7.72%</span></td>
+<td>0.00001785</td>
+<td>0.70419809</td>
+<td>0.00001813</td>
+<td>0.00001655</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/XTNC.png" width="16" height="16" style="margin: 5px" />XtendCash</span></td>
+<td><a href="/exchange/BTC-XTNC">BTC-XTNC</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="0">&#9650; 0.00%</span></td>
+<td>0.00000001</td>
+<td>0.00098275</td>
+<td>0.00000001</td>
+<td>0.00000001</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/XUN.png" width="16" height="16" style="margin: 5px" />UltraNote</span></td>
+<td><a href="/exchange/BTC-XUN">BTC-XUN</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="0">&#9650; 0.00%</span></td>
+<td>0.00000001</td>
+<td>0.00000000</td>
+<td>0.00000001</td>
+<td>0.00000001</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/XUSD.png" width="16" height="16" style="margin: 5px" />xUSD</span></td>
+<td><a href="/exchange/BTC-XUSD">BTC-XUSD</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="0">&#9650; 0.00%</span></td>
+<td>0.00001572</td>
+<td>0.00000000</td>
+<td>0.00001572</td>
+<td>0.00001572</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/XVG.png" width="16" height="16" style="margin: 5px" />Verge</span></td>
+<td><a href="/exchange/BTC-XVG">BTC-XVG</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="0">&#9650; 0.00%</span></td>
+<td>0.00000016</td>
+<td>0.00038480</td>
+<td>0.00000016</td>
+<td>0.00000016</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/XWP.png" width="16" height="16" style="margin: 5px" />Swap</span></td>
+<td><a href="/exchange/BTC-XWP">BTC-XWP</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="0">&#9650; 0.00%</span></td>
+<td>0.00000046</td>
+<td>0.00439305</td>
+<td>0.00000054</td>
+<td>0.00000046</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/ZANO.png" width="16" height="16" style="margin: 5px" />Zano</span></td>
+<td><a href="/exchange/BTC-ZANO">BTC-ZANO</a></td>
+<td><span class="negcolor" style="font-weight: bold" data-numeric="-2.7655838454785">&#9660; 2.77%</span></td>
+<td>0.00002215</td>
+<td>0.01640199</td>
+<td>0.00002368</td>
+<td>0.00002215</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="marketname" style="margin-left: 10px; margin-top: 5px"><img src="/img/coins/USDT.png" width="16" height="16" style="margin-right: 5px; ">USDT Markets</div>
+<div style="margin-bottom: 5px">
+<table id="usdtmarkets" class="table table-sm responsive table-striped" cellspacing="0" width="100%">
+<thead>
+<tr>
+<th>Currency</th>
+<th>Market</th>
+<th>Change</th>
+<th>Price</th>
+<th class="min-tablet">Volume</th>
+<th class="min-desktop">High</th>
+<th class="min-desktop">Low</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><span><img src="/img/coins/ARRR.png" width="16" height="16" style="margin: 5px" />Pirate</span></td>
+<td><a href="/exchange/USDT-ARRR">USDT-ARRR</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="4.5971569446694">&#9650; 4.60%</span></td>
+<td>0.43534822</td>
+<td>355.68112648</td>
+<td>0.43534822</td>
+<td>0.41310710</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/AVN.png" width="16" height="16" style="margin: 5px" />Avian</span></td>
+<td><a href="/exchange/USDT-AVN">USDT-AVN</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="53.59">&#9650; 53.59%</span></td>
+<td>0.00015359</td>
+<td>35.98333531</td>
+<td>0.00015360</td>
+<td>0.00010000</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/BMB.png" width="16" height="16" style="margin: 5px" />Bamboo</span></td>
+<td><a href="/exchange/USDT-BMB">USDT-BMB</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="0">&#9650; 0.00%</span></td>
+<td>0.02600000</td>
+<td>0.00000000</td>
+<td>0.02600000</td>
+<td>0.02600000</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/BTC.png" width="16" height="16" style="margin: 5px" />Bitcoin</span></td>
+<td><a href="/exchange/USDT-BTC">USDT-BTC</a></td>
+<td><span class="negcolor" style="font-weight: bold" data-numeric="-0.50760441277986">&#9660; 0.51%</span></td>
+<td>19775.14832704</td>
+<td>122763.01615859</td>
+<td>19999.25002000</td>
+<td>19400.00000000</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/CCX.png" width="16" height="16" style="margin: 5px" />Conceal</span></td>
+<td><a href="/exchange/USDT-CCX">USDT-CCX</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="12.375">&#9650; 12.38%</span></td>
+<td>0.08990000</td>
+<td>175.81793659</td>
+<td>0.08990000</td>
+<td>0.08000000</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/DERO.png" width="16" height="16" style="margin: 5px" />Dero</span></td>
+<td><a href="/exchange/USDT-DERO">USDT-DERO</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="1.1627906976744">&#9650; 1.16%</span></td>
+<td>3.91500000</td>
+<td>784.57513554</td>
+<td>3.91500000</td>
+<td>3.63916281</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/ERG.png" width="16" height="16" style="margin: 5px" />Ergo</span></td>
+<td><a href="/exchange/USDT-ERG">USDT-ERG</a></td>
+<td><span class="negcolor" style="font-weight: bold" data-numeric="-1.5314309964712">&#9660; 1.53%</span></td>
+<td>4.15200000</td>
+<td>1807.87718428</td>
+<td>4.78193124</td>
+<td>4.00000000</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/KAS.png" width="16" height="16" style="margin: 5px" />Kaspa</span></td>
+<td><a href="/exchange/USDT-KAS">USDT-KAS</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="10.215591397849">&#9650; 10.22%</span></td>
+<td>0.00410002</td>
+<td>32578.87026337</td>
+<td>0.00520000</td>
+<td>0.00350000</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/NEOX.png" width="16" height="16" style="margin: 5px" />Neoxa</span></td>
+<td><a href="/exchange/USDT-NEOX">USDT-NEOX</a></td>
+<td><span class="negcolor" style="font-weight: bold" data-numeric="-4.2246478873239">&#9660; 4.22%</span></td>
+<td>0.00680005</td>
+<td>42307.30029366</td>
+<td>0.00886000</td>
+<td>0.00540999</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/PRCY.png" width="16" height="16" style="margin: 5px" />PRivaCY Coin</span></td>
+<td><a href="/exchange/USDT-PRCY">USDT-PRCY</a></td>
+<td><span class="negcolor" style="font-weight: bold" data-numeric="-7.4710893848636">&#9660; 7.47%</span></td>
+<td>0.02959998</td>
+<td>6583.40306666</td>
+<td>0.03199899</td>
+<td>0.02100001</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/XEQ.png" width="16" height="16" style="margin: 5px" />Equilibria</span></td>
+<td><a href="/exchange/USDT-XEQ">USDT-XEQ</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="-0.001049875414775">&#9650; 0.00%</span></td>
+<td>0.06000649</td>
+<td>7.17030778</td>
+<td>0.06000712</td>
+<td>0.06000649</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/XHV.png" width="16" height="16" style="margin: 5px" />Haven</span></td>
+<td><a href="/exchange/USDT-XHV">USDT-XHV</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="0">&#9650; 0.00%</span></td>
+<td>0.52610767</td>
+<td>2.27792722</td>
+<td>0.52610767</td>
+<td>0.52610767</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/XMR.png" width="16" height="16" style="margin: 5px" />Monero</span></td>
+<td><a href="/exchange/USDT-XMR">USDT-XMR</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="2.754105081304">&#9650; 2.75%</span></td>
+<td>152.01999980</td>
+<td>17493.22477731</td>
+<td>156.00000000</td>
+<td>145.25604270</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="marketname" style="margin-left: 10px; margin-top: 5px"><img src="/img/coins/LTC.png" width="16" height="16" style="margin-right: 5px; ">LTC Markets</div>
+<div style="margin-bottom: 5px">
+<table id="ltcmarkets" class="table table-sm responsive table-striped" cellspacing="0" width="100%">
+<thead>
+<tr>
+<th>Currency</th>
+<th>Market</th>
+<th>Change</th>
+<th>Price</th>
+<th class="min-tablet">Volume</th>
+<th class="min-desktop">High</th>
+<th class="min-desktop">Low</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><span><img src="/img/coins/AVN.png" width="16" height="16" style="margin: 5px" />Avian</span></td>
+<td><a href="/exchange/LTC-AVN">LTC-AVN</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="15.66265060241">&#9650; 15.66%</span></td>
+<td>0.00000192</td>
+<td>13.05002160</td>
+<td>0.00000225</td>
+<td>0.00000165</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/BBS.png" width="16" height="16" style="margin: 5px" />BBSCoin</span></td>
+<td><a href="/exchange/LTC-BBS">LTC-BBS</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="0">&#9650; 0.00%</span></td>
+<td>0.00000001</td>
+<td>0.01000000</td>
+<td>0.00000001</td>
+<td>0.00000001</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/BCN.png" width="16" height="16" style="margin: 5px" />Bytecoin</span></td>
+<td><a href="/exchange/LTC-BCN">LTC-BCN</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="5.1724137931035">&#9650; 5.17%</span></td>
+<td>0.00000061</td>
+<td>0.47389848</td>
+<td>0.00000061</td>
+<td>0.00000057</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/BKC.png" width="16" height="16" style="margin: 5px" />Balkancoin</span></td>
+<td><a href="/exchange/LTC-BKC">LTC-BKC</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="0">&#9650; 0.00%</span></td>
+<td>0.00000028</td>
+<td>0.02682962</td>
+<td>0.00000028</td>
+<td>0.00000028</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/BTCZ.png" width="16" height="16" style="margin: 5px" />BitcoinZ</span></td>
+<td><a href="/exchange/LTC-BTCZ">LTC-BTCZ</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="8.7087087087087">&#9650; 8.71%</span></td>
+<td>0.00000362</td>
+<td>15.06793593</td>
+<td>0.00000393</td>
+<td>0.00000321</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/BTRM.png" width="16" height="16" style="margin: 5px" />Bitoreum</span></td>
+<td><a href="/exchange/LTC-BTRM">LTC-BTRM</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="3.8888888888889">&#9650; 3.89%</span></td>
+<td>0.00000374</td>
+<td>2.73347249</td>
+<td>0.00000399</td>
+<td>0.00000360</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/CASH.png" width="16" height="16" style="margin: 5px" />Litecash</span></td>
+<td><a href="/exchange/LTC-CASH">LTC-CASH</a></td>
+<td><span class="negcolor" style="font-weight: bold" data-numeric="-41.847826086957">&#9660; 41.85%</span></td>
+<td>0.00000749</td>
+<td>7.86568110</td>
+<td>0.00001288</td>
+<td>0.00000653</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/ETNX.png" width="16" height="16" style="margin: 5px" />Electronero</span></td>
+<td><a href="/exchange/LTC-ETNX">LTC-ETNX</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="0">&#9650; 0.00%</span></td>
+<td>0.00000001</td>
+<td>0.04500000</td>
+<td>0.00000001</td>
+<td>0.00000001</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/ETNXP.png" width="16" height="16" style="margin: 5px" />ElectroneroPulse</span></td>
+<td><a href="/exchange/LTC-ETNXP">LTC-ETNXP</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="0">&#9650; 0.00%</span></td>
+<td>0.00000001</td>
+<td>0.02000000</td>
+<td>0.00000001</td>
+<td>0.00000001</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/INC.png" width="16" height="16" style="margin: 5px" />Incognito</span></td>
+<td><a href="/exchange/LTC-INC">LTC-INC</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="0">&#9650; 0.00%</span></td>
+<td>0.00000089</td>
+<td>0.00000000</td>
+<td>0.00000089</td>
+<td>0.00000089</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/INTU.png" width="16" height="16" style="margin: 5px" />INTUcoin</span></td>
+<td><a href="/exchange/LTC-INTU">LTC-INTU</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="0">&#9650; 0.00%</span></td>
+<td>0.00000005</td>
+<td>0.00000000</td>
+<td>0.00000005</td>
+<td>0.00000005</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/LTHN.png" width="16" height="16" style="margin: 5px" />Lethean</span></td>
+<td><a href="/exchange/LTC-LTHN">LTC-LTHN</a></td>
+<td><span class="negcolor" style="font-weight: bold" data-numeric="-25">&#9660; 25%</span></td>
+<td>0.00000210</td>
+<td>0.08260000</td>
+<td>0.00000280</td>
+<td>0.00000210</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/MAT.png" width="16" height="16" style="margin: 5px" />Matka</span></td>
+<td><a href="/exchange/LTC-MAT">LTC-MAT</a></td>
+<td><span class="negcolor" style="font-weight: bold" data-numeric="-11.111111111111">&#9660; 11.11%</span></td>
+<td>0.00000016</td>
+<td>1.92247106</td>
+<td>0.00000018</td>
+<td>0.00000008</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/NCP.png" width="16" height="16" style="margin: 5px" />Newton</span></td>
+<td><a href="/exchange/LTC-NCP">LTC-NCP</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="0">&#9650; 0.00%</span></td>
+<td>0.00000001</td>
+<td>0.00000000</td>
+<td>0.00000001</td>
+<td>0.00000001</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/NEOX.png" width="16" height="16" style="margin: 5px" />Neoxa</span></td>
+<td><a href="/exchange/LTC-NEOX">LTC-NEOX</a></td>
+<td><span class="negcolor" style="font-weight: bold" data-numeric="-7.1745448982714">&#9660; 7.17%</span></td>
+<td>0.00012136</td>
+<td>880.60647215</td>
+<td>0.00016109</td>
+<td>0.00009904</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/OMB.png" width="16" height="16" style="margin: 5px" />Ombre</span></td>
+<td><a href="/exchange/LTC-OMB">LTC-OMB</a></td>
+<td><span class="negcolor" style="font-weight: bold" data-numeric="-13.636363636364">&#9660; 13.64%</span></td>
+<td>0.00000057</td>
+<td>0.06157379</td>
+<td>0.00000079</td>
+<td>0.00000057</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/PCN.png" width="16" height="16" style="margin: 5px" />PeepCoin</span></td>
+<td><a href="/exchange/LTC-PCN">LTC-PCN</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="0">&#9650; 0.00%</span></td>
+<td>0.00000001</td>
+<td>0.02500000</td>
+<td>0.00000001</td>
+<td>0.00000001</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/PLURA.png" width="16" height="16" style="margin: 5px" />PluraCoin</span></td>
+<td><a href="/exchange/LTC-PLURA">LTC-PLURA</a></td>
+<td><span class="negcolor" style="font-weight: bold" data-numeric="-20">&#9660; 20%</span></td>
+<td>0.00000072</td>
+<td>0.02767201</td>
+<td>0.00000090</td>
+<td>0.00000072</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/QUAN.png" width="16" height="16" style="margin: 5px" />Quantis</span></td>
+<td><a href="/exchange/LTC-QUAN">LTC-QUAN</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="0">&#9650; 0.00%</span></td>
+<td>0.00000299</td>
+<td>0.00000000</td>
+<td>0.00000299</td>
+<td>0.00000299</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/RTM.png" width="16" height="16" style="margin: 5px" />Raptoreum</span></td>
+<td><a href="/exchange/LTC-RTM">LTC-RTM</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="5.6497175141243">&#9650; 5.65%</span></td>
+<td>0.00005236</td>
+<td>19.68604085</td>
+<td>0.00005597</td>
+<td>0.00004673</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/SOLACE.png" width="16" height="16" style="margin: 5px" />Solacecoin</span></td>
+<td><a href="/exchange/LTC-SOLACE">LTC-SOLACE</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="0">&#9650; 0.00%</span></td>
+<td>0.00000002</td>
+<td>0.01097800</td>
+<td>0.00000002</td>
+<td>0.00000002</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/SYFR.png" width="16" height="16" style="margin: 5px" />Syfer</span></td>
+<td><a href="/exchange/LTC-SYFR">LTC-SYFR</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="71.590909090909">&#9650; 71.59%</span></td>
+<td>0.00000302</td>
+<td>6.74128856</td>
+<td>0.00000302</td>
+<td>0.00000156</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/TRTL.png" width="16" height="16" style="margin: 5px" />TurtleCoin</span></td>
+<td><a href="/exchange/LTC-TRTL">LTC-TRTL</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="40">&#9650; 40.00%</span></td>
+<td>0.00000007</td>
+<td>4.47697534</td>
+<td>0.00000007</td>
+<td>0.00000005</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/UPX.png" width="16" height="16" style="margin: 5px" />uPlexa</span></td>
+<td><a href="/exchange/LTC-UPX">LTC-UPX</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="1.7241379310345">&#9650; 1.72%</span></td>
+<td>0.00000059</td>
+<td>0.75263106</td>
+<td>0.00000073</td>
+<td>0.00000052</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/WAE.png" width="16" height="16" style="margin: 5px" />WeyCoin</span></td>
+<td><a href="/exchange/LTC-WAE">LTC-WAE</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="0">&#9650; 0.00%</span></td>
+<td>0.00000099</td>
+<td>0.03084425</td>
+<td>0.00000099</td>
+<td>0.00000099</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/WTIP.png" width="16" height="16" style="margin: 5px" />Worktips</span></td>
+<td><a href="/exchange/LTC-WTIP">LTC-WTIP</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="0">&#9650; 0.00%</span></td>
+<td>0.00000016</td>
+<td>0.03607871</td>
+<td>0.00000016</td>
+<td>0.00000016</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/XLA.png" width="16" height="16" style="margin: 5px" />Scala</span></td>
+<td><a href="/exchange/LTC-XLA">LTC-XLA</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="14.634146341463">&#9650; 14.63%</span></td>
+<td>0.00000094</td>
+<td>29.09165533</td>
+<td>0.00000110</td>
+<td>0.00000080</td>
+</tr>
+<tr>
+<td><span><img src="/img/coins/XUN.png" width="16" height="16" style="margin: 5px" />UltraNote</span></td>
+<td><a href="/exchange/LTC-XUN">LTC-XUN</a></td>
+<td><span class="poscolor" style="font-weight: bold" data-numeric="0">&#9650; 0.00%</span></td>
+<td>0.00000001</td>
+<td>0.00000000</td>
+<td>0.00000001</td>
+<td>0.00000001</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div><div id="alerts" style="position:fixed; bottom:0; right:0; z-index:100; padding-right:20px; padding-bottom:24px; display:none; pointer-events:none">
+</div>
+</div>
+<div id="bfooter">
+<div style="display: table; margin: auto;">
+<div id="bfooterc" style="font-weight: bold">
+<div class="bfootcol l">
+<div><a href="https://twitter.com/tradeogre"><img src="/img/twitter.png" width="16" height="13" style="margin-right: 5px; margin-top: -2px">Twitter</a></div>
+<div><a href="https://docs.google.com/forms/d/e/1FAIpQLScolXS8WMCDG7j8dIAbmutrQR6BWD5BrOCcRKJLCFfgPTBwoQ/viewform?usp=sf_link">Coin Listing</a></div>
+</div>
+<div class="bfootcol l">
+<div><a href="/help/api">API</a></div>
+<div><a href="/help/fees">Fees</a></div>
+</div>
+</div>
+</div>
+</div>
+<div id="footer"><div class="fitem min500">&copy; 2022 TradeOgre</div><div class="fitem"><img src="/img/offline.png" width="16" height="12" style="margin-bottom: 2px" id="statusws"></div><div class="fitem">Online: <span id="online">4090</span></div><div class="fitem">BTC: $<span id="bpbtc">19,862.84</span></div><div class="fitem">LTC: $<span id="bpltc">56.51</span></div><div id="light" class="" style="margin-left:auto; margin-right: 0"><i style="" class="fa fa-lg fa-lightbulb-o" aria-hidden="true"></i></div></div>
+</div>
+</body>
+</html>
